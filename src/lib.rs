@@ -35,3 +35,9 @@ pub fn calculate_mp (ap: &f32, bp: &f32) -> f32 {
 pub fn calculate_c (pt: &f32, mp: &f32) -> f32 {
     (pt - mp).abs()
 }
+
+pub fn find_all_with_t (connection: &mut PgConnection, target_type: &String) -> QueryResult<Vec<ObjectS>> {
+    objects_s
+        .filter(t.eq(target_type))
+        .load::<ObjectS>(connection)
+}
