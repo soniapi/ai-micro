@@ -1,0 +1,37 @@
+use diesel::{PgConnection, RunQueryDsl, QueryDsl};
+use diesel::prelude::*;
+use infra::models::ObjectS;
+use infra::schema::objects_s::*;
+use infra::schema::objects_s::dsl::objects_s;
+
+pub fn backwards (
+    connection: &mut PgConnection,
+    start_object_id: i32,
+    target_type: &String,
+) -> Result<Vec<ObjectS>, diesel::result::Error> {
+
+    let mut result_vector: Vec<ObjectS> = Vec::new();
+
+    let query_results = objects_s
+        .filter(id.le(start_object_id))
+        .order(id.desc())
+        .limit(100)
+        .select(ObjectS::as_select())
+        .load(connection)?;
+
+    for backward_item in query_results {
+        if backward_item.t == *target_type {
+            result_vector.push(backward_item);
+            break;
+        }
+    }
+    Ok(result_vector)
+}
+
+pub fn calculate_mp (ap: &f32, bp: &f32) -> f32 {
+    ( ap + bp ) / 2.0
+}
+
+pub fn calculate_c (pt: &f32, mp: &f32) -> f32 {
+    (pt - mp).abs()
+}
