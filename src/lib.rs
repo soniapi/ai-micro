@@ -1,3 +1,4 @@
+use diesel::dsl::avg;
 use diesel::{PgConnection, RunQueryDsl, QueryDsl};
 use diesel::prelude::*;
 use infra::models::ObjectS;
@@ -39,5 +40,12 @@ pub fn calculate_c (pt: &f32, mp: &f32) -> f32 {
 pub fn find_all_with_t (connection: &mut PgConnection, target_type: &String) -> QueryResult<Vec<ObjectS>> {
     objects_s
         .filter(t.eq(target_type))
+        .limit(1000)
         .load::<ObjectS>(connection)
+}
+
+pub fn c_average (connection: &mut PgConnection) -> Result<Option<f64>, diesel::result::Error> {
+    objects_s
+        .select(avg(c))
+        .first(connection)
 }
