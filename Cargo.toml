@@ -5,6 +5,6 @@ edition = "2024"
 
 [dependencies]
 diesel = { version = "2.2.0", features = ["postgres_backend", "postgres", "chrono"]}
-infra = { path = "../infra" }
-prop = { path = "../prop" }
+infra = { git = "https://github.com/soniapi/infra.git" }
+prop = { git = "https://github.com/soniapi/prop.git" }
 dotenvy = "0.15"
