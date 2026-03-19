@@ -1,9 +1,9 @@
 use diesel::dsl::avg;
 use diesel::{PgConnection, RunQueryDsl, QueryDsl};
 use diesel::prelude::*;
-use infra::models::ObjectS;
-use infra::schema::objects_s::*;
-use infra::schema::objects_s::dsl::objects_s;
+use ai_infra::models::ObjectS;
+use ai_infra::schema::objects_s::*;
+use ai_infra::schema::objects_s::dsl::objects_s;
 
 pub fn backwards (
     connection: &mut PgConnection,
