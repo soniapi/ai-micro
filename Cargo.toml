@@ -1,10 +1,10 @@
 [package]
-name = "micro"
+name = "ai_micro"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 diesel = { version = "2.2.0", features = ["postgres_backend", "postgres", "chrono"]}
-infra = { git = "https://github.com/soniapi/infra.git" }
-prop = { git = "https://github.com/soniapi/prop.git" }
+ai_infra = { git = "https://github.com/soniapi/ai-infra.git" }
+ai_prop = { git = "https://github.com/soniapi/ai-prop.git" }
 dotenvy = "0.15"

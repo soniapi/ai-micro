@@ -2,11 +2,11 @@ use core::f32;
 
 use diesel::BoolExpressionMethods;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
-use infra::establish_connection;
-use infra::schema::objects_s::dsl::objects_s;
-use infra::schema::objects_s::*;
-use infra::models::ObjectS;
-use::micro::*;
+use ai_infra::establish_connection;
+use ai_infra::schema::objects_s::dsl::objects_s;
+use ai_infra::schema::objects_s::*;
+use ai_infra::models::ObjectS;
+use::ai_micro::*;
 use diesel::dsl::avg;
 use diesel::dsl::max;
 
