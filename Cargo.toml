@@ -8,3 +8,6 @@ diesel = { version = "2.2.0", features = ["postgres_backend", "postgres", "chron
 infra = { git = "https://github.com/soniapi/infra.git" }
 prop = { git = "https://github.com/soniapi/prop.git" }
 dotenvy = "0.15"
+
+[patch."https://github.com/soniapi/prop.git"]
+infra = { git = "https://github.com/soniapi/infra.git" }
