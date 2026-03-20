@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Item id {:?}", item.id);
                 let start_object_id = item.id;
 
-                match micro::backwards(connection, start_object_id, &target_type_a) {
+                match ai_micro::backwards(connection, start_object_id, &target_type_a) {
                     Ok(items) => {
                         for item in items {
                             println!("Found object: id={:?}, type={:?}, date={:?}", item.id, item.t, item.d);
@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
 
-                match micro::backwards(connection, start_object_id, &target_type_b) {
+                match ai_micro::backwards(connection, start_object_id, &target_type_b) {
                     Ok(items) => {
                         for item in items {
                             println!("Found object: id={:?}, type={:?}, date={:?}", item.id, item.t, item.d);                
@@ -146,11 +146,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let m2: f32 = objects_s.filter(s.ge(195000.00)).filter(c.lt(avg_value_population)).count().get_result::<i64>(connection)? as f32;
     println!("Population 2 m2: {:?}", m2);
 
-    let (_p_temp, p1, p2) = prop::calculate_proportions(&m, &m1, &m2, &n, &n1, &n2);
+    let (_p_temp, p1, p2) = ai_prop::calculate_proportions(&m, &m1, &m2, &n, &n1, &n2);
 
-    let pooled_estimate = prop::calculate_pooled_estimate (&n1, &n2, &p1, &p2);
+    let pooled_estimate = ai_prop::calculate_pooled_estimate (&n1, &n2, &p1, &p2);
 
-    prop::calculate_z_statistics(&n1, &n2, &p1, &p2, &pooled_estimate);
+    ai_prop::calculate_z_statistics(&n1, &n2, &p1, &p2, &pooled_estimate);
 
   Ok(())
 
