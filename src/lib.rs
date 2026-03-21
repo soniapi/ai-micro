@@ -49,3 +49,32 @@ pub fn c_average (connection: &mut PgConnection) -> Result<Option<f64>, diesel::
         .select(avg(c))
         .first(connection)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_c() {
+        // Positive values
+        assert_eq!(calculate_c(&10.0, &5.0), 5.0);
+        assert_eq!(calculate_c(&5.0, &10.0), 5.0);
+
+        // Negative values
+        assert_eq!(calculate_c(&-10.0, &-5.0), 5.0);
+        assert_eq!(calculate_c(&-5.0, &-10.0), 5.0);
+
+        // Mixed values
+        assert_eq!(calculate_c(&-5.0, &5.0), 10.0);
+        assert_eq!(calculate_c(&5.0, &-5.0), 10.0);
+
+        // Zero values
+        assert_eq!(calculate_c(&0.0, &0.0), 0.0);
+        assert_eq!(calculate_c(&5.0, &0.0), 5.0);
+        assert_eq!(calculate_c(&0.0, &5.0), 5.0);
+
+        // Fractional values
+        assert_eq!(calculate_c(&2.5, &1.0), 1.5);
+        assert_eq!(calculate_c(&1.0, &2.5), 1.5);
+    }
+}
