@@ -1,16 +1,15 @@
-use diesel::dsl::avg;
-use diesel::{PgConnection, RunQueryDsl, QueryDsl};
-use diesel::prelude::*;
 use ai_infra::models::ObjectS;
-use ai_infra::schema::objects_s::*;
 use ai_infra::schema::objects_s::dsl::objects_s;
+use ai_infra::schema::objects_s::*;
+use diesel::dsl::avg;
+use diesel::prelude::*;
+use diesel::{PgConnection, QueryDsl, RunQueryDsl};
 
-pub fn backwards (
+pub fn backwards(
     connection: &mut PgConnection,
     start_object_id: i32,
     target_type: &String,
 ) -> Result<Vec<ObjectS>, diesel::result::Error> {
-
     let mut result_vector: Vec<ObjectS> = Vec::new();
 
     let query_results = objects_s
@@ -29,15 +28,18 @@ pub fn backwards (
     Ok(result_vector)
 }
 
-pub fn calculate_mp (ap: &f32, bp: &f32) -> f32 {
-    ( ap + bp ) / 2.0
+pub fn calculate_mp(ap: &f32, bp: &f32) -> f32 {
+    (ap + bp) / 2.0
 }
 
-pub fn calculate_c (pt: &f32, mp: &f32) -> f32 {
+pub fn calculate_c(pt: &f32, mp: &f32) -> f32 {
     (pt - mp).abs()
 }
 
-pub fn find_all_with_t (connection: &mut PgConnection, target_type: &String) -> QueryResult<Vec<ObjectS>> {
+pub fn find_all_with_t(
+    connection: &mut PgConnection,
+    target_type: &String,
+) -> QueryResult<Vec<ObjectS>> {
     objects_s
         .filter(t.eq(target_type))
         .limit(1000)
