@@ -11,8 +11,6 @@ pub fn backwards (
     target_type: &String,
 ) -> Result<Vec<ObjectS>, diesel::result::Error> {
 
-    let mut result_vector: Vec<ObjectS> = Vec::new();
-
     let query_results = objects_s
         .filter(id.le(start_object_id))
         .order(id.desc())
@@ -20,12 +18,12 @@ pub fn backwards (
         .select(ObjectS::as_select())
         .load(connection)?;
 
-    for backward_item in query_results {
-        if backward_item.t == *target_type {
-            result_vector.push(backward_item);
-            break;
-        }
-    }
+    let result_vector = query_results
+        .into_iter()
+        .find(|backward_item| backward_item.t == *target_type)
+        .into_iter()
+        .collect();
+
     Ok(result_vector)
 }
 
