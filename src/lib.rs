@@ -28,11 +28,11 @@ pub fn backwards(
     Ok(result_vector)
 }
 
-pub fn calculate_mp(ap: &f32, bp: &f32) -> f32 {
+pub fn calculate_mp(ap: f32, bp: f32) -> f32 {
     (ap + bp) / 2.0
 }
 
-pub fn calculate_c(pt: &f32, mp: &f32) -> f32 {
+pub fn calculate_c(pt: f32, mp: f32) -> f32 {
     (pt - mp).abs()
 }
 
@@ -58,20 +58,20 @@ mod tests {
 
     #[test]
     fn test_calculate_mp() {
-        assert_eq!(calculate_mp(&0.0, &0.0), 0.0);
-        assert_eq!(calculate_mp(&10.0, &20.0), 15.0);
-        assert_eq!(calculate_mp(&-10.0, &10.0), 0.0);
-        assert_eq!(calculate_mp(&-20.0, &-10.0), -15.0);
-        assert_eq!(calculate_mp(&1.5, &2.5), 2.0);
+        assert_eq!(calculate_mp(0.0, 0.0), 0.0);
+        assert_eq!(calculate_mp(10.0, 20.0), 15.0);
+        assert_eq!(calculate_mp(-10.0, 10.0), 0.0);
+        assert_eq!(calculate_mp(-20.0, -10.0), -15.0);
+        assert_eq!(calculate_mp(1.5, 2.5), 2.0);
     }
 
     #[test]
     fn test_calculate_c() {
-        assert_eq!(calculate_c(&10.0, &5.0), 5.0);
-        assert_eq!(calculate_c(&5.0, &10.0), 5.0);
-        assert_eq!(calculate_c(&0.0, &0.0), 0.0);
-        assert_eq!(calculate_c(&-5.0, &-10.0), 5.0);
-        assert_eq!(calculate_c(&-10.0, &-5.0), 5.0);
-        assert_eq!(calculate_c(&5.0, &-5.0), 10.0);
+        assert_eq!(calculate_c(10.0, 5.0), 5.0);
+        assert_eq!(calculate_c(5.0, 10.0), 5.0);
+        assert_eq!(calculate_c(0.0, 0.0), 0.0);
+        assert_eq!(calculate_c(-5.0, -10.0), 5.0);
+        assert_eq!(calculate_c(-10.0, -5.0), 5.0);
+        assert_eq!(calculate_c(5.0, -5.0), 10.0);
     }
 }
