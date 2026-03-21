@@ -14,13 +14,36 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: runner
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: ai_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v4
     - name: Checkout ai-infra
       run: git clone https://github.com/soniapi/ai-infra ../ai-infra
     - name: Checkout ai-prop
       run: git clone https://github.com/soniapi/ai-prop ../ai-prop
+    - name: Setup Database
+      env:
+        DATABASE_URL: postgres://runner:password@localhost:5432/ai_test
+      run: |
+        cargo install diesel_cli --no-default-features --features postgres
+        cd ../ai-infra && diesel setup
     - name: Build
       run: cargo build --verbose
     - name: Run tests
+      env:
+        DATABASE_URL: postgres://runner:password@localhost:5432/ai_test
       run: cargo test --verbose
