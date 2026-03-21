@@ -30,6 +30,6 @@ fn test_end_to_end_sequence() {
 
     // Some simple assertions
     assert_eq!(p_population, 0.5); // 50 / 100
-    assert_eq!(p1, 0.5);           // 20 / 40
-    assert_eq!(p2, 0.5);           // 30 / 60
+    assert_eq!(p1, 0.5); // 20 / 40
+    assert_eq!(p2, 0.5); // 30 / 60
 }
