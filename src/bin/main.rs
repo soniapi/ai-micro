@@ -146,12 +146,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let m2: f32 = objects_s.filter(s.ge(195000.00)).filter(c.lt(avg_value_population)).count().get_result::<i64>(connection)? as f32;
     println!("Population 2 m2: {:?}", m2);
 
-    let (_p_temp, p1, p2) = ai_prop::calculate_proportions(m, m1, m2, n, n1, n2);
+    let overall = ai_prop::PopulationData { m, n };
+    let group1 = ai_prop::PopulationData { m: m1, n: n1 };
+    let group2 = ai_prop::PopulationData { m: m2, n: n2 };
 
-    let pooled_estimate = ai_prop::calculate_pooled_estimate (n1, n2, p1, p2);
+    let (_p_temp, p1, p2) = ai_prop::calculate_proportions(overall, group1, group2);
+
+    let pooled_estimate = ai_prop::calculate_pooled_estimate(n1, n2, p1, p2);
 
     ai_prop::calculate_z_statistics(n1, n2, p1, p2, pooled_estimate);
-
-  Ok(())
 
 }

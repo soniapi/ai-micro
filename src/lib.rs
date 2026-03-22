@@ -13,20 +13,13 @@ pub fn backwards (
 
     let mut result_vector: Vec<ObjectS> = Vec::new();
 
-    let query_results = objects_s
+    objects_s
         .filter(id.le(start_object_id))
+        .filter(t.eq(target_type))
         .order(id.desc())
-        .limit(100)
+        .limit(1)
         .select(ObjectS::as_select())
-        .load(connection)?;
-
-    for backward_item in query_results {
-        if backward_item.t == *target_type {
-            result_vector.push(backward_item);
-            break;
-        }
-    }
-    Ok(result_vector)
+        .load(connection)
 }
 
 pub fn calculate_mp (ap: f32, bp: f32) -> f32 {
