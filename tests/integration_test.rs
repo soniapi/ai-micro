@@ -1,6 +1,6 @@
 use ai_infra::establish_connection;
 use ai_micro::find_all_with_t;
-use ai_prop::calculate_proportions;
+use ai_prop::{calculate_proportions, PopulationData};
 
 #[test]
 fn test_end_to_end_sequence() {
@@ -26,14 +26,14 @@ fn test_end_to_end_sequence() {
     let n1 = 40.0;
     let n2 = 60.0;
 
-    let overall = ai_prop::PopulationData { m, n: n_total };
-    let group1 = ai_prop::PopulationData { m: m1, n: n1 };
-    let group2 = ai_prop::PopulationData { m: m2, n: n2 };
-
-    let (p_population, p1, p2) = calculate_proportions(overall, group1, group2);
+    let (p_population, p1, p2) = calculate_proportions(
+        PopulationData { m, n: n_total },
+        PopulationData { m: m1, n: n1 },
+        PopulationData { m: m2, n: n2 },
+    );
 
     // Some simple assertions
     assert_eq!(p_population, 0.5); // 50 / 100
-    assert_eq!(p1, 0.5); // 20 / 40
-    assert_eq!(p2, 0.5); // 30 / 60
+    assert_eq!(p1, 0.5);           // 20 / 40
+    assert_eq!(p2, 0.5);           // 30 / 60
 }
