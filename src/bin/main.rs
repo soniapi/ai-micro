@@ -1,14 +1,14 @@
 use core::f32;
 
-use diesel::BoolExpressionMethods;
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
+use ::ai_micro::*;
 use ai_infra::establish_connection;
+use ai_infra::models::ObjectS;
 use ai_infra::schema::objects_s::dsl::objects_s;
 use ai_infra::schema::objects_s::*;
-use ai_infra::models::ObjectS;
-use::ai_micro::*;
+use diesel::BoolExpressionMethods;
 use diesel::dsl::avg;
 use diesel::dsl::max;
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let connection = &mut establish_connection();
@@ -21,7 +21,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bp = 0.0;
     let pt = 0.0;
 
-
     match find_all_with_t(connection, &target_type_t) {
         Ok(trade_objects) => {
             for item in trade_objects {
@@ -31,7 +30,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match ai_micro::backwards(connection, start_object_id, &target_type_a) {
                     Ok(items) => {
                         for item in items {
-                            println!("Found object: id={:?}, type={:?}, date={:?}", item.id, item.t, item.d);
+                            println!(
+                                "Found object: id={:?}, type={:?}, date={:?}",
+                                item.id, item.t, item.d
+                            );
                             ap = item.p;
                         }
                     }
@@ -43,32 +45,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match ai_micro::backwards(connection, start_object_id, &target_type_b) {
                     Ok(items) => {
                         for item in items {
-                            println!("Found object: id={:?}, type={:?}, date={:?}", item.id, item.t, item.d);
+                            println!(
+                                "Found object: id={:?}, type={:?}, date={:?}",
+                                item.id, item.t, item.d
+                            );
                             bp = item.p;
-                         }
+                        }
                     }
                     Err(e) => {
                         eprintln!("Error fetching objects: {}", e);
                     }
                 }
 
-                let mp = calculate_mp(&ap, &bp);
-                let ec = calculate_c(&pt, &mp);
+                let mp = calculate_mp(ap, bp);
+                let ec = calculate_c(pt, mp);
                 println!("c is {:?}", &ec);
 
-                diesel::update(objects_s.filter(id.eq(start_object_id)))
+                match diesel::update(objects_s.filter(id.eq(start_object_id)))
                     .set(c.eq(ec))
                     .returning(ObjectS::as_select())
                     .get_result(connection)
-                    .expect("Error updating column ce for ObjectS");
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        eprintln!("Error updating column c for ObjectS: {}", e);
+                        continue;
+                    }
+                }
 
-                let result: f32 = objects_s
+                match objects_s
                     .select(c)
                     .filter(id.eq(start_object_id))
-                    .first(connection)
-                    .expect("Error loading object ec");
-
-                println!("Column c: {:?}", result);
+                    .first::<f32>(connection)
+                {
+                    Ok(result) => {
+                        println!("Column c: {:?}", result);
+                    }
+                    Err(e) => {
+                        eprintln!("Error loading object c: {}", e);
+                        continue;
+                    }
+                }
             }
         }
         Err(e) => {
@@ -76,9 +93,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let result: Result<Option<f64>, diesel::result::Error> = objects_s
-        .select(avg(c))
-        .first(connection);
+    let result: Result<Option<f64>, diesel::result::Error> =
+        objects_s.select(avg(c)).first(connection);
 
     match result {
         Ok(Some(average_value)) => {
@@ -104,9 +120,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => eprintln!("Error calculating c average: {:?}", e),
     }
 
-    let result_max: Result<Option<f32>, diesel::result::Error> = objects_s
-        .select(max(s))
-        .first(connection);
+    let result_max: Result<Option<f32>, diesel::result::Error> =
+        objects_s.select(max(s)).first(connection);
 
     match result_max {
         Ok(Some(max_value)) => {
@@ -118,11 +133,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .first(connection);
 
             match result_2 {
-                Ok(Some(average_value_2)) => println!("Population_2 c average: {:?}", average_value_2),
+                Ok(Some(average_value_2)) => {
+                    println!("Population_2 c average: {:?}", average_value_2)
+                }
                 Ok(None) => println!("No data found to calculate the c average."),
                 Err(e) => eprintln!("Error calculating c average: {:?}", e),
             }
-
         }
         Ok(None) => println!("No data found to calculate the max."),
         Err(e) => eprintln!("Error calculating max: {:?}", e),
@@ -131,27 +147,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let n: f32 = objects_s.count().get_result::<i64>(connection)? as f32;
     println!("Whole Population count n: {:?}", n);
 
-    let m: f32 = objects_s.filter(c.lt(avg_value_population)).count().get_result::<i64>(connection)? as f32;
+    let m: f32 = objects_s
+        .filter(c.lt(avg_value_population))
+        .count()
+        .get_result::<i64>(connection)? as f32;
     println!("Whole population m: {:?}", m);
 
-    let n1: f32 = objects_s.filter(s.lt(195000.00)).count().get_result::<i64>(connection)? as f32;
+    let n1: f32 = objects_s
+        .filter(s.lt(195000.00))
+        .count()
+        .get_result::<i64>(connection)? as f32;
     println!("Population 1 count n1: {:?}", n1);
 
-    let m1: f32 = objects_s.filter(s.lt(195000.00)).filter(c.lt(avg_value_population)).count().get_result::<i64>(connection)? as f32;
+    let m1: f32 = objects_s
+        .filter(s.lt(195000.00))
+        .filter(c.lt(avg_value_population))
+        .count()
+        .get_result::<i64>(connection)? as f32;
     println!("Population 1 m1: {:?}", m1);
 
-    let n2: f32 = objects_s.filter(s.ge(195000.00)).count().get_result::<i64>(connection)? as f32;
+    let n2: f32 = objects_s
+        .filter(s.ge(195000.00))
+        .count()
+        .get_result::<i64>(connection)? as f32;
     println!("Population 2 count n2: {:?}", n2);
 
-    let m2: f32 = objects_s.filter(s.ge(195000.00)).filter(c.lt(avg_value_population)).count().get_result::<i64>(connection)? as f32;
+    let m2: f32 = objects_s
+        .filter(s.ge(195000.00))
+        .filter(c.lt(avg_value_population))
+        .count()
+        .get_result::<i64>(connection)? as f32;
     println!("Population 2 m2: {:?}", m2);
 
-    let (_p_temp, p1, p2) = ai_prop::calculate_proportions(m, m1, m2, n, n1, n2);
+    let (_p_temp, p1, p2) = ai_prop::calculate_proportions(
+        ai_prop::PopulationData { m, n },
+        ai_prop::PopulationData { m: m1, n: n1 },
+        ai_prop::PopulationData { m: m2, n: n2 },
+    );
 
-    let pooled_estimate = ai_prop::calculate_pooled_estimate (n1, n2, p1, p2);
+    let pooled_estimate = ai_prop::calculate_pooled_estimate(n1, n2, p1, p2);
 
     ai_prop::calculate_z_statistics(n1, n2, p1, p2, pooled_estimate);
 
-  Ok(())
-
+    Ok(())
 }
