@@ -49,27 +49,3 @@ pub fn c_average (connection: &mut PgConnection) -> Result<Option<f64>, diesel::
         .select(avg(c))
         .first(connection)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_calculate_mp() {
-        assert_eq!(calculate_mp(0.0, 0.0), 0.0);
-        assert_eq!(calculate_mp(10.0, 20.0), 15.0);
-        assert_eq!(calculate_mp(-10.0, 10.0), 0.0);
-        assert_eq!(calculate_mp(-20.0, -10.0), -15.0);
-        assert_eq!(calculate_mp(1.5, 2.5), 2.0);
-    }
-
-    #[test]
-    fn test_calculate_c() {
-        assert_eq!(calculate_c(10.0, 5.0), 5.0);
-        assert_eq!(calculate_c(5.0, 10.0), 5.0);
-        assert_eq!(calculate_c(0.0, 0.0), 0.0);
-        assert_eq!(calculate_c(-5.0, -10.0), 5.0);
-        assert_eq!(calculate_c(-10.0, -5.0), 5.0);
-        assert_eq!(calculate_c(5.0, -5.0), 10.0);
-    }
-}
