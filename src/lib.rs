@@ -11,14 +11,12 @@ pub fn backwards (
     target_type: &String,
 ) -> Result<Vec<ObjectS>, diesel::result::Error> {
 
-    let query_results = objects_s
+    let result_vector = objects_s
         .filter(id.le(start_object_id))
         .order(id.desc())
         .limit(100)
         .select(ObjectS::as_select())
-        .load(connection)?;
-
-    let result_vector = query_results
+        .load::<ObjectS>(connection)?
         .into_iter()
         .find(|backward_item| backward_item.t == *target_type)
         .into_iter()
