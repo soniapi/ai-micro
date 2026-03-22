@@ -17,7 +17,15 @@ pub fn backwards (
         .order(id.desc())
         .limit(1)
         .select(ObjectS::as_select())
-        .load(connection)
+        .load(connection)?;
+
+    let result_vector = query_results
+        .into_iter()
+        .find(|backward_item| backward_item.t == *target_type)
+        .into_iter()
+        .collect();
+
+    Ok(result_vector)
 }
 
 pub fn calculate_mp (ap: &f32, bp: &f32) -> f32 {
