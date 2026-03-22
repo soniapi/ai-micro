@@ -26,11 +26,11 @@ fn test_end_to_end_sequence() {
     let n1 = 40.0;
     let n2 = 60.0;
 
-    let (p_population, p1, p2) = calculate_proportions(
-        ai_prop::PopulationData { m, n: n_total },
-        ai_prop::PopulationData { m: m1, n: n1 },
-        ai_prop::PopulationData { m: m2, n: n2 },
-    );
+    let overall = ai_prop::PopulationData { m, n: n_total };
+    let group1 = ai_prop::PopulationData { m: m1, n: n1 };
+    let group2 = ai_prop::PopulationData { m: m2, n: n2 };
+
+    let (p_population, p1, p2) = calculate_proportions(overall, group1, group2);
 
     // Some simple assertions
     assert_eq!(p_population, 0.5); // 50 / 100

@@ -179,11 +179,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .get_result::<i64>(connection)? as f32;
     println!("Population 2 m2: {:?}", m2);
 
-    let (_p_temp, p1, p2) = ai_prop::calculate_proportions(
-        ai_prop::PopulationData { m, n },
-        ai_prop::PopulationData { m: m1, n: n1 },
-        ai_prop::PopulationData { m: m2, n: n2 },
-    );
+    let overall = ai_prop::PopulationData { m, n };
+    let group1 = ai_prop::PopulationData { m: m1, n: n1 };
+    let group2 = ai_prop::PopulationData { m: m2, n: n2 };
+
+    let (_p_temp, p1, p2) = ai_prop::calculate_proportions(overall, group1, group2);
 
     let pooled_estimate = ai_prop::calculate_pooled_estimate(n1, n2, p1, p2);
 
