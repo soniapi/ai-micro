@@ -52,8 +52,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
 
-                let mp = calculate_mp(&ap, &bp);
-                let ec = calculate_c(&pt, &mp);
+                let mp = calculate_mp(ap, bp);
+                let ec = calculate_c(pt, mp);
                 println!("c is {:?}", &ec);
 
                 diesel::update(objects_s.filter(id.eq(start_object_id)))
