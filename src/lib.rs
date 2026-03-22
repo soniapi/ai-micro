@@ -25,11 +25,11 @@ pub fn backwards (
     Ok(result_vector)
 }
 
-pub fn calculate_mp (ap: &f32, bp: &f32) -> f32 {
+pub fn calculate_mp (ap: f32, bp: f32) -> f32 {
     ( ap + bp ) / 2.0
 }
 
-pub fn calculate_c (pt: &f32, mp: &f32) -> f32 {
+pub fn calculate_c (pt: f32, mp: f32) -> f32 {
     (pt - mp).abs()
 }
 
