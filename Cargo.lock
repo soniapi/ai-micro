@@ -27,7 +27,6 @@ version = "0.1.0"
 dependencies = [
  "ai_infra",
  "ai_prop",
- "chrono",
  "diesel",
  "dotenvy",
 ]
