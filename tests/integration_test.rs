@@ -26,10 +26,10 @@ fn test_end_to_end_sequence() {
     let n1 = 40.0;
     let n2 = 60.0;
 
-    let (p_population, p1, p2) = calculate_proportions(&m, &m1, &m2, &n_total, &n1, &n2);
+    let (p_population, p1, p2) = calculate_proportions(m, m1, m2, n_total, n1, n2);
 
     // Some simple assertions
     assert_eq!(p_population, 0.5); // 50 / 100
-    assert_eq!(p1, 0.5); // 20 / 40
-    assert_eq!(p2, 0.5); // 30 / 60
+    assert_eq!(p1, 0.5);           // 20 / 40
+    assert_eq!(p2, 0.5);           // 30 / 60
 }
