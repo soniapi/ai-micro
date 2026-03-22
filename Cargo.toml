@@ -8,3 +8,4 @@ diesel = { version = "2.2.0", features = ["postgres_backend", "postgres", "chron
 ai_infra = { path = "../ai-infra" }
 ai_prop = { path = "../ai-prop" }
 dotenvy = "0.15"
+chrono = "0.4.44"
