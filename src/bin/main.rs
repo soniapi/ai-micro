@@ -10,6 +10,26 @@ use::ai_micro::*;
 use diesel::dsl::avg;
 use diesel::dsl::max;
 
+fn fetch_and_print_objects(
+    connection: &mut diesel::PgConnection,
+    start_object_id: i32,
+    target_type: &String,
+) -> Option<f32> {
+    let mut p_val = None;
+    match ai_micro::backwards(connection, start_object_id, target_type) {
+        Ok(items) => {
+            for item in items {
+                println!("Found object: id={:?}, type={:?}, date={:?}", item.id, item.t, item.d);
+                p_val = Some(item.p);
+            }
+        }
+        Err(e) => {
+            eprintln!("Error fetching objects: {}", e);
+        }
+    }
+    p_val
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let connection = &mut establish_connection();
 
@@ -17,9 +37,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let target_type_b = "BID".to_string();
     let target_type_t = "TRADE".to_string();
     let mut avg_value_population: f32 = 0.0;
-    let mut ap = 0.0;
-    let mut bp = 0.0;
-    let pt = 0.0;
+    let mut ap: f32 = 0.0;
+    let mut bp: f32 = 0.0;
+    let pt: f32 = 0.0;
 
 
     match find_all_with_t(connection, &target_type_t) {
@@ -28,28 +48,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Item id {:?}", item.id);
                 let start_object_id = item.id;
 
-                match ai_micro::backwards(connection, start_object_id, &target_type_a) {
-                    Ok(items) => {
-                        for item in items {
-                            println!("Found object: id={:?}, type={:?}, date={:?}", item.id, item.t, item.d);
-                            ap = item.p;
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!("Error fetching objects: {}", e);
-                    }
+                if let Some(p_val) = fetch_and_print_objects(connection, start_object_id, &target_type_a) {
+                    ap = p_val;
                 }
 
-                match ai_micro::backwards(connection, start_object_id, &target_type_b) {
-                    Ok(items) => {
-                        for item in items {
-                            println!("Found object: id={:?}, type={:?}, date={:?}", item.id, item.t, item.d);
-                            bp = item.p;
-                         }
-                    }
-                    Err(e) => {
-                        eprintln!("Error fetching objects: {}", e);
-                    }
+                if let Some(p_val) = fetch_and_print_objects(connection, start_object_id, &target_type_b) {
+                    bp = p_val;
                 }
 
                 let mp = calculate_mp(ap, bp);
