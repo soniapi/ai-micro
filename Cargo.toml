@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-diesel = { version = "2.2.0", features = ["postgres_backend", "postgres", "chrono"]}
+diesel = { version = "2.2.0", features = ["postgres_backend", "postgres", "chrono"] }
 ai_infra = { path = "../ai-infra" }
 ai_prop = { path = "../ai-prop" }
 dotenvy = "0.15"
