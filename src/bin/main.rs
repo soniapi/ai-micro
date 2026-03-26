@@ -10,29 +10,6 @@ use diesel::dsl::avg;
 use diesel::dsl::max;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
 
-fn fetch_and_print_objects(
-    connection: &mut diesel::PgConnection,
-    start_object_id: i32,
-    target_type: &String,
-) -> Option<f32> {
-    let mut p_val = None;
-    match ai_micro::backwards(connection, start_object_id, target_type) {
-        Ok(items) => {
-            for item in items {
-                println!(
-                    "Found object: id={:?}, type={:?}, date={:?}",
-                    item.id, item.t, item.d
-                );
-                p_val = Some(item.p);
-            }
-        }
-        Err(e) => {
-            eprintln!("Error fetching objects: {}", e);
-        }
-    }
-    p_val
-}
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let connection = &mut establish_connection();
 
@@ -51,13 +28,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let start_object_id = item.id;
 
                 if let Some(p_val) =
-                    fetch_and_print_objects(connection, start_object_id, &target_type_a)
+                    find_nearest(connection, start_object_id, &target_type_a)
                 {
                     ap = p_val;
                 }
 
                 if let Some(p_val) =
-                    fetch_and_print_objects(connection, start_object_id, &target_type_b)
+                    find_nearest(connection, start_object_id, &target_type_b)
                 {
                     bp = p_val;
                 }
