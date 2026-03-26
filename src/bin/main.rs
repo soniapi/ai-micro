@@ -10,26 +10,6 @@ use::ai_micro::*;
 use diesel::dsl::avg;
 use diesel::dsl::max;
 
-fn find_nearest(
-    connection: &mut diesel::PgConnection,
-    start_object_id: i32,
-    target_type: &String,
-) -> Option<f32> {
-    let mut p_val = None;
-    match ai_micro::backwards(connection, start_object_id, target_type) {
-        Ok(items) => {
-            for item in items {
-                println!("Found object: id={:?}, type={:?}, date={:?}", item.id, item.t, item.d);
-                p_val = Some(item.p);
-            }
-        }
-        Err(e) => {
-            eprintln!("Error fetching objects: {}", e);
-        }
-    }
-    p_val
-}
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let connection = &mut establish_connection();
 
