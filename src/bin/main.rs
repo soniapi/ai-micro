@@ -10,7 +10,7 @@ use::ai_micro::*;
 use diesel::dsl::avg;
 use diesel::dsl::max;
 
-fn fetch_and_print_objects(
+fn find_nearest(
     connection: &mut diesel::PgConnection,
     start_object_id: i32,
     target_type: &String,
@@ -48,11 +48,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Item id {:?}", item.id);
                 let start_object_id = item.id;
 
-                if let Some(p_val) = fetch_and_print_objects(connection, start_object_id, &target_type_a) {
+                if let Some(p_val) = find_nearest(connection, start_object_id, &target_type_a) {
                     ap = p_val;
                 }
 
-                if let Some(p_val) = fetch_and_print_objects(connection, start_object_id, &target_type_b) {
+                if let Some(p_val) = find_nearest(connection, start_object_id, &target_type_b) {
                     bp = p_val;
                 }
 
