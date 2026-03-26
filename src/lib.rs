@@ -45,3 +45,23 @@ pub fn c_average (connection: &mut PgConnection) -> Result<Option<f64>, diesel::
         .select(avg(c))
         .first(connection)
 }
+
+pub fn find_nearest(
+    connection: &mut PgConnection,
+    start_object_id: i32,
+    target_type: &String,
+) -> Option<f32> {
+    let mut p_val = None;
+    match backwards(connection, start_object_id, target_type) {
+        Ok(items) => {
+            for item in items {
+                println!("Found object: id={:?}, type={:?}, date={:?}", item.id, item.t, item.d);
+                p_val = Some(item.p);
+            }
+        }
+        Err(e) => {
+            eprintln!("Error fetching objects: {}", e);
+        }
+    }
+    p_val
+}
