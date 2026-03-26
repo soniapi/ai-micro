@@ -1,14 +1,37 @@
 use core::f32;
 
-use diesel::BoolExpressionMethods;
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
+use ::ai_micro::*;
 use ai_infra::establish_connection;
+use ai_infra::models::ObjectS;
 use ai_infra::schema::objects_s::dsl::objects_s;
 use ai_infra::schema::objects_s::*;
-use ai_infra::models::ObjectS;
-use::ai_micro::*;
+use diesel::BoolExpressionMethods;
 use diesel::dsl::avg;
 use diesel::dsl::max;
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
+
+fn fetch_and_print_objects(
+    connection: &mut diesel::PgConnection,
+    start_object_id: i32,
+    target_type: &String,
+) -> Option<f32> {
+    let mut p_val = None;
+    match ai_micro::backwards(connection, start_object_id, target_type) {
+        Ok(items) => {
+            for item in items {
+                println!(
+                    "Found object: id={:?}, type={:?}, date={:?}",
+                    item.id, item.t, item.d
+                );
+                p_val = Some(item.p);
+            }
+        }
+        Err(e) => {
+            eprintln!("Error fetching objects: {}", e);
+        }
+    }
+    p_val
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let connection = &mut establish_connection();
@@ -21,18 +44,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bp: f32 = 0.0;
     let pt: f32 = 0.0;
 
-
     match find_all_with_t(connection, &target_type_t) {
         Ok(trade_objects) => {
             for item in trade_objects {
                 println!("Item id {:?}", item.id);
                 let start_object_id = item.id;
 
-                if let Some(p_val) = find_nearest(connection, start_object_id, &target_type_a) {
+                if let Some(p_val) =
+                    fetch_and_print_objects(connection, start_object_id, &target_type_a)
+                {
                     ap = p_val;
                 }
 
-                if let Some(p_val) = find_nearest(connection, start_object_id, &target_type_b) {
+                if let Some(p_val) =
+                    fetch_and_print_objects(connection, start_object_id, &target_type_b)
+                {
                     bp = p_val;
                 }
 
@@ -60,9 +86,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let result: Result<Option<f64>, diesel::result::Error> = objects_s
-        .select(avg(c))
-        .first(connection);
+    let result: Result<Option<f64>, diesel::result::Error> =
+        objects_s.select(avg(c)).first(connection);
 
     match result {
         Ok(Some(average_value)) => {
@@ -88,9 +113,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => eprintln!("Error calculating c average: {:?}", e),
     }
 
-    let result_max: Result<Option<f32>, diesel::result::Error> = objects_s
-        .select(max(s))
-        .first(connection);
+    let result_max: Result<Option<f32>, diesel::result::Error> =
+        objects_s.select(max(s)).first(connection);
 
     match result_max {
         Ok(Some(max_value)) => {
@@ -102,11 +126,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .first(connection);
 
             match result_2 {
-                Ok(Some(average_value_2)) => println!("Population_2 c average: {:?}", average_value_2),
+                Ok(Some(average_value_2)) => {
+                    println!("Population_2 c average: {:?}", average_value_2)
+                }
                 Ok(None) => println!("No data found to calculate the c average."),
                 Err(e) => eprintln!("Error calculating c average: {:?}", e),
             }
-
         }
         Ok(None) => println!("No data found to calculate the max."),
         Err(e) => eprintln!("Error calculating max: {:?}", e),
@@ -150,10 +175,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ai_prop::PopulationData { m: m2, n: n2 },
     );
 
-    let pooled_estimate = ai_prop::calculate_pooled_estimate (n1, n2, p1, p2);
+    let pooled_estimate = ai_prop::calculate_pooled_estimate(n1, n2, p1, p2);
 
     ai_prop::calculate_z_statistics(n1, n2, p1, p2, pooled_estimate);
 
-  Ok(())
-
+    Ok(())
 }

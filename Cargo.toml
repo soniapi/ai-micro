@@ -8,3 +8,16 @@ diesel = { version = "2.2.0", features = ["postgres_backend", "postgres", "chron
 ai_infra = { path = "../ai-infra" }
 ai_prop = { path = "../ai-prop" }
 dotenvy = "0.15"
+
+[dev-dependencies]
+chrono = "0.4.44"
+diesel_migrations = "2.3.1"
+rand = "0.10.0"
+rust_xlsxwriter = { version = "0.94.0", features = ["chrono"] }
+testcontainers = "0.27.2"
+testcontainers-modules = { version = "0.15.0", features = ["postgres"] }
+tokio = { version = "1.50.0", features = ["full"] }
+
+[[bin]]
+name = "fill_data"
+path = "src/bin/fill_data.rs"
