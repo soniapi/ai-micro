@@ -1,5 +1,5 @@
 use ai_infra::{establish_connection, divider};
-use ai_micro::{find_all_with_t, calculate_mp, calculate_c, backwards};
+use ai_micro::{find_all_with_t, calculate_mp, calculate_c, backwards, find_nearest};
 use diesel::{RunQueryDsl, Connection};
 use ai_infra::schema::objects_s::dsl::objects_s;
 use ai_infra::schema::objects_s::*;
@@ -139,16 +139,16 @@ async fn test_end_to_end_sequence() {
         let mut bp = 0.0;
         let pt = item.p; // Price of the TRADE object
 
-        if let Ok(items) = backwards(&mut connection, item.id, &target_type_a) {
-            if let Some(first_ask) = items.first() {
-                ap = first_ask.p;
-            }
+        if let Some(p_val) =
+            find_nearest(&mut connection, item.id, &target_type_a)
+        {
+            ap = p_val;
         }
 
-        if let Ok(items) = backwards(&mut connection, item.id, &target_type_b) {
-            if let Some(first_bid) = items.first() {
-                bp = first_bid.p;
-            }
+        if let Some(p_val) =
+            find_nearest(&mut connection, item.id, &target_type_b)
+        {
+            bp = p_val;
         }
 
         let mp = calculate_mp(ap, bp);
@@ -158,7 +158,10 @@ async fn test_end_to_end_sequence() {
             .set(c.eq(ec))
             .execute(&mut connection)
             .expect("Error updating column c for ObjectS");
+        
+        println!("Udating DB... cost{} for id {}", item.c, item.id);
     }
-
+    tokio::time::sleep(Duration::from_secs(10)).await;
     println!("Test sequence completed successfully.");
+    tokio::time::sleep(Duration::from_secs(10)).await;
 }
