@@ -56,7 +56,7 @@ pub fn find_nearest(
     let mut p_val = None;
     match backwards(connection, start_object_id, target_type) {
         Ok(items) => {
-            for item in items {
+            if let Some(item) = items.into_iter().filter(|i| i.t == *target_type).max_by_key(|i| i.d) {
                 println!("Found object: id={:?}, type={:?}, date={:?}", item.id, item.t, item.d);
                 p_val = Some(item.p);
             }
