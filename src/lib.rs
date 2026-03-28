@@ -1,6 +1,7 @@
 use ai_infra::models::ObjectS;
 use ai_infra::schema::objects_s::dsl::objects_s;
 use ai_infra::schema::objects_s::*;
+use diesel::ExpressionMethods;
 use diesel::dsl::avg;
 use diesel::prelude::*;
 use diesel::{PgConnection, QueryDsl, RunQueryDsl};
@@ -136,6 +137,42 @@ pub fn update_partioned_table_with_ec_for_one_trade(
         .expect("Error loading object ec");
 
     result
+}
+
+pub fn calculate_population_2_trades_ec_average(
+    connection: &mut PgConnection,
+    divide_s: f32,
+    max_value: f32,
+) {
+    let result_2: Result<Option<f64>, diesel::result::Error> = objects_s
+        .filter(s.ge(divide_s).and(s.le(max_value)))
+        .select(avg(c))
+        .first(connection);
+
+    match result_2 {
+        Ok(Some(average_value_2)) => {
+            println!("Population_2 c average: {:?}", average_value_2)
+        }
+        Ok(None) => println!("No data found to calculate the c average."),
+        Err(e) => eprintln!("Error calculating c average: {:?}", e),
+    }
+}
+
+pub fn calculate_population_1_trades_ec_average(
+    connection: &mut PgConnection,
+    start_s: f32,
+    divide_s: f32,
+) {
+    let result_1: Result<Option<f64>, diesel::result::Error> = objects_s
+        .filter(s.ge(start_s).and(s.lt(divide_s)))
+        .select(avg(c))
+        .first(connection);
+
+    match result_1 {
+        Ok(Some(average_value_1)) => println!("Population_1 c average: {:?}", average_value_1),
+        Ok(None) => println!("No data found to calculate the c average."),
+        Err(e) => eprintln!("Error calculating c average: {:?}", e),
+    }
 }
 
 pub fn find_nearest(
