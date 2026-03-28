@@ -70,6 +70,74 @@ pub fn calculate_ec_for_one_trade(start_object_id: i32, trade_objects: &Vec<Obje
     calculate_c(pt, mp)
 }
 
+pub fn calculate_whole_population_trades_ec_average(
+    connection: &mut PgConnection,
+    micro_var: char,
+) -> f32 {
+    let target_type_t = "TRADE".to_string();
+    let mut avg_value_population: f32 = 0.0;
+
+    match find_all_with_t(connection, &target_type_t) {
+        Ok(trade_objects) => {
+            for trade in &trade_objects {
+                println!("Item id {:?}", trade.id);
+
+                let ec = calculate_ec_for_one_trade(trade.id, &trade_objects);
+                println!("c is {:?}", &ec);
+
+                let result = update_partioned_table_with_ec_for_one_trade(
+                    connection, micro_var, trade.id, ec,
+                );
+
+                println!("Column c: {:?}", result);
+            }
+        }
+        Err(e) => {
+            eprintln!("Error fetching objects: {:?}", e);
+        }
+    }
+
+    if micro_var == 's' {
+        let result: Result<Option<f64>, diesel::result::Error> =
+            objects_s.select(avg(c)).first(connection);
+
+        match result {
+            Ok(Some(average_value)) => {
+                println!("Whole population average: {:?}", average_value);
+                avg_value_population = average_value as f32;
+            }
+            Ok(None) => println!("No data found to calculate the average."),
+            Err(e) => eprintln!("Error calculating average: {:?}", e),
+        }
+    }
+
+    avg_value_population
+}
+
+pub fn update_partioned_table_with_ec_for_one_trade(
+    connection: &mut diesel::PgConnection,
+    micro_var: char,
+    trade_id: i32,
+    ec: f32,
+) -> f32 {
+    if micro_var == 's' {
+        if let Err(e) = diesel::update(objects_s.filter(id.eq(trade_id)))
+            .set(c.eq(ec))
+            .execute(connection)
+        {
+            eprintln!("Error updating column ce for ObjectS: {:?}", e);
+        }
+    }
+
+    let result: f32 = objects_s
+        .select(c)
+        .filter(id.eq(trade_id))
+        .first(connection)
+        .expect("Error loading object ec");
+
+    result
+}
+
 pub fn find_nearest(
     connection: &mut PgConnection,
     start_object_id: i32,
