@@ -201,3 +201,48 @@ pub fn find_nearest(
     }
     p_val
 }
+
+pub fn calculate_proportions_partioned_table(
+    connection: &mut PgConnection,
+    avg_value_population: f32,
+) -> Result<(f32, f32, f32, f32), diesel::result::Error> {
+    use diesel::dsl::count;
+    use diesel::expression_methods::AggregateExpressionMethods;
+
+    let counts = objects_s
+        .select((
+            count(id),
+            count(id).aggregate_filter(c.lt(avg_value_population)),
+            count(id).aggregate_filter(s.lt(195000.00)),
+            count(id).aggregate_filter(s.lt(195000.00).and(c.lt(avg_value_population))),
+            count(id).aggregate_filter(s.ge(195000.00)),
+            count(id).aggregate_filter(s.ge(195000.00).and(c.lt(avg_value_population))),
+        ))
+        .first::<(i64, i64, i64, i64, i64, i64)>(connection)?;
+
+    let n: f32 = counts.0 as f32;
+    println!("Whole Population count n: {:?}", n);
+
+    let m: f32 = counts.1 as f32;
+    println!("Whole population m: {:?}", m);
+
+    let n1: f32 = counts.2 as f32;
+    println!("Population 1 count n1: {:?}", n1);
+
+    let m1: f32 = counts.3 as f32;
+    println!("Population 1 m1: {:?}", m1);
+
+    let n2: f32 = counts.4 as f32;
+    println!("Population 2 count n2: {:?}", n2);
+
+    let m2: f32 = counts.5 as f32;
+    println!("Population 2 m2: {:?}", m2);
+
+    let (_p_temp, p1, p2) = ai_prop::calculate_proportions(
+        ai_prop::PopulationData { m, n },
+        ai_prop::PopulationData { m: m1, n: n1 },
+        ai_prop::PopulationData { m: m2, n: n2 },
+    );
+
+    Ok((p1, p2, n1, n2))
+}
