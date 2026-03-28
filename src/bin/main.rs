@@ -2,13 +2,11 @@ use core::f32;
 
 use ::ai_micro::*;
 use ai_infra::establish_connection;
-use ai_infra::models::ObjectS;
 use ai_infra::schema::objects_s::dsl::objects_s;
 use ai_infra::schema::objects_s::*;
 use diesel::BoolExpressionMethods;
-use diesel::dsl::avg;
 use diesel::dsl::max;
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let connection = &mut establish_connection();
@@ -21,16 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let divide_s = 195000.0_f32;
 
     // Something else
-    let result_1: Result<Option<f64>, diesel::result::Error> = objects_s
-        .filter(s.ge(start_s).and(s.lt(divide_s)))
-        .select(avg(c))
-        .first(connection);
-
-    match result_1 {
-        Ok(Some(average_value_1)) => println!("Population_1 c average: {:?}", average_value_1),
-        Ok(None) => println!("No data found to calculate the c average."),
-        Err(e) => eprintln!("Error calculating c average: {:?}", e),
-    }
+    calculate_population_1_trades_ec_average(connection, start_s, divide_s);
 
     let result_max: Result<Option<f32>, diesel::result::Error> =
         objects_s.select(max(s)).first(connection);
@@ -39,18 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(Some(max_value)) => {
             println!("Whole population max s: {:?}", max_value);
 
-            let result_2: Result<Option<f64>, diesel::result::Error> = objects_s
-                .filter(s.ge(divide_s).and(s.le(max_value)))
-                .select(avg(c))
-                .first(connection);
-
-            match result_2 {
-                Ok(Some(average_value_2)) => {
-                    println!("Population_2 c average: {:?}", average_value_2)
-                }
-                Ok(None) => println!("No data found to calculate the c average."),
-                Err(e) => eprintln!("Error calculating c average: {:?}", e),
-            }
+            calculate_population_2_trades_ec_average(connection, divide_s, max_value);
         }
         Ok(None) => println!("No data found to calculate the max."),
         Err(e) => eprintln!("Error calculating max: {:?}", e),
@@ -100,4 +78,3 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
