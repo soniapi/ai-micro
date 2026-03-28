@@ -1,18 +1,17 @@
-use ai_infra::{establish_connection, divider};
-use ai_micro::{find_all_with_t, calculate_mp, calculate_c, backwards, find_nearest};
+use ai_infra::divider;
+use ai_micro::{find_all_with_t, calculate_ec_for_one_trade};
 use diesel::{RunQueryDsl, Connection};
 use ai_infra::schema::objects_s::dsl::objects_s;
 use ai_infra::schema::objects_s::*;
 use diesel::QueryDsl;
-use ai_infra::models::ObjectS;
 use diesel::ExpressionMethods;
 use std::time::Duration;
 use diesel::sql_query;
 use testcontainers::{runners::AsyncRunner, ImageExt};
 use testcontainers_modules::postgres::Postgres;
 use rust_xlsxwriter::{Workbook, Format};
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Duration as ChronoDuration};
-use rand::{Rng, RngExt};
+use chrono::{NaiveDate, NaiveTime, Duration as ChronoDuration};
+use rand::RngExt;
 use std::process::{Command, Stdio};
 use std::io::Write;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
@@ -127,39 +126,20 @@ async fn test_end_to_end_sequence() {
 
     // 7. Calculate mid-price and cost
     let target_type_t = "TRADE".to_string();
-    let target_type_a = "ASK".to_string();
-    let target_type_b = "BID".to_string();
 
     println!("Fetching trade objects...");
     let trade_objects = find_all_with_t(&mut connection, &target_type_t).expect("Error querying database");
 
     println!("Calculating costs and updating DB...");
-    for item in trade_objects {
-        let mut ap = 0.0;
-        let mut bp = 0.0;
-        let pt = item.p; // Price of the TRADE object
-
-        if let Some(p_val) =
-            find_nearest(&mut connection, item.id, &target_type_a)
-        {
-            ap = p_val;
-        }
-
-        if let Some(p_val) =
-            find_nearest(&mut connection, item.id, &target_type_b)
-        {
-            bp = p_val;
-        }
-
-        let mp = calculate_mp(ap, bp);
-        let ec = calculate_c(pt, mp);
+    for item in &trade_objects {
+        let ec = calculate_ec_for_one_trade(&mut connection, item.id, item.p);
 
         diesel::update(objects_s.filter(id.eq(item.id)))
             .set(c.eq(ec))
             .execute(&mut connection)
             .expect("Error updating column c for ObjectS");
         
-        println!("Udating DB... cost{} for id {}", item.c, item.id);
+        println!("Udating DB... cost{} for id {}", ec, item.id);
     }
     tokio::time::sleep(Duration::from_secs(10)).await;
     println!("Test sequence completed successfully.");

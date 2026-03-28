@@ -48,6 +48,28 @@ pub fn c_average (connection: &mut PgConnection) -> Result<Option<f64>, diesel::
         .first(connection)
 }
 
+pub fn calculate_ec_for_one_trade(
+    connection: &mut PgConnection,
+    start_object_id: i32,
+    pt: f32,
+) -> f32 {
+    let target_type_a = "ASK".to_string();
+    let target_type_b = "BID".to_string();
+    let mut ap: f32 = 0.0;
+    let mut bp: f32 = 0.0;
+
+    if let Some(p_val) = find_nearest(connection, start_object_id, &target_type_a) {
+        ap = p_val;
+    }
+
+    if let Some(p_val) = find_nearest(connection, start_object_id, &target_type_b) {
+        bp = p_val;
+    }
+
+    let mp = calculate_mp(ap, bp);
+    calculate_c(pt, mp)
+}
+
 pub fn find_nearest(
     connection: &mut PgConnection,
     start_object_id: i32,
