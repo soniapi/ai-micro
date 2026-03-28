@@ -16,26 +16,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let target_type_t = "TRADE".to_string();
     let mut avg_value_population: f32 = 0.0;
 
+    let micro_var = 's';
     match find_all_with_t(connection, &target_type_t) {
         Ok(trade_objects) => {
-            for item in &trade_objects {
-                println!("Item id {:?}", item.id);
-                let start_object_id = item.id;
+            for trade in &trade_objects {
+                println!("Item id {:?}", trade.id);
 
-                let ec = calculate_ec_for_one_trade(start_object_id, &trade_objects);
+                let ec = calculate_ec_for_one_trade(trade.id, &trade_objects);
                 println!("c is {:?}", &ec);
 
-                diesel::update(objects_s.filter(id.eq(start_object_id)))
-                    .set(c.eq(ec))
-                    .returning(ObjectS::as_select())
-                    .get_result(connection)
-                    .expect("Error updating column ce for ObjectS");
-
-                let result: f32 = objects_s
-                    .select(c)
-                    .filter(id.eq(start_object_id))
-                    .first(connection)
-                    .expect("Error loading object ec");
+                let result = update_partioned_table_with_ec_for_one_trade(connection, micro_var, trade.id, ec);
 
                 println!("Column c: {:?}", result);
             }
@@ -139,4 +129,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ai_prop::calculate_z_statistics(n1, n2, p1, p2, pooled_estimate);
 
     Ok(())
+}
+
+pub fn update_partioned_table_with_ec_for_one_trade(connection: &mut diesel::PgConnection, micro_var: char, trade_id: i32, ec: f32) -> f32 {
+    if micro_var == 's' {
+        if let Err(e) = diesel::update(objects_s.filter(id.eq(trade_id)))
+            .set(c.eq(ec))
+            .execute(connection)
+        {
+            eprintln!("Error updating column ce for ObjectS: {:?}", e);
+        }
+    }
+
+    let result: f32 = objects_s
+        .select(c)
+        .filter(id.eq(trade_id))
+        .first(connection)
+        .expect("Error loading object ec");
+
+    result
 }

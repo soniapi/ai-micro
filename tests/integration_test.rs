@@ -1,21 +1,21 @@
-use ai_infra::{establish_connection, divider};
-use ai_micro::{find_all_with_t, calculate_mp, calculate_c, backwards, find_nearest};
-use diesel::{RunQueryDsl, Connection};
+use ai_infra::models::ObjectS;
 use ai_infra::schema::objects_s::dsl::objects_s;
 use ai_infra::schema::objects_s::*;
-use diesel::QueryDsl;
-use ai_infra::models::ObjectS;
+use ai_infra::{divider, establish_connection};
+use ai_micro::{backwards, calculate_c, calculate_mp, find_all_with_t, find_nearest};
+use chrono::{Duration as ChronoDuration, NaiveDate, NaiveDateTime, NaiveTime};
 use diesel::ExpressionMethods;
-use std::time::Duration;
+use diesel::QueryDsl;
 use diesel::sql_query;
-use testcontainers::{runners::AsyncRunner, ImageExt};
-use testcontainers_modules::postgres::Postgres;
-use rust_xlsxwriter::{Workbook, Format};
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Duration as ChronoDuration};
+use diesel::{Connection, RunQueryDsl};
+use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use rand::{Rng, RngExt};
-use std::process::{Command, Stdio};
+use rust_xlsxwriter::{Format, Workbook};
 use std::io::Write;
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use std::process::{Command, Stdio};
+use std::time::Duration;
+use testcontainers::{ImageExt, runners::AsyncRunner};
+use testcontainers_modules::postgres::Postgres;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("../ai-infra/migrations");
 
@@ -29,7 +29,10 @@ async fn test_end_to_end_sequence() {
         .await
         .expect("Failed to start Postgres container");
 
-    let port = container.get_host_port_ipv4(5432).await.expect("Failed to get port");
+    let port = container
+        .get_host_port_ipv4(5432)
+        .await
+        .expect("Failed to get port");
     let database_url = format!("postgres://postgres:postgres@localhost:{}/postgres", port);
 
     unsafe {
@@ -52,8 +55,12 @@ async fn test_end_to_end_sequence() {
 
     connection.run_pending_migrations(MIGRATIONS).unwrap();
 
-    sql_query("DROP TABLE IF EXISTS objects_s_100000_below CASCADE;").execute(&mut connection).unwrap();
-    sql_query("DROP TABLE IF EXISTS objects_s_100000_above CASCADE;").execute(&mut connection).unwrap();
+    sql_query("DROP TABLE IF EXISTS objects_s_100000_below CASCADE;")
+        .execute(&mut connection)
+        .unwrap();
+    sql_query("DROP TABLE IF EXISTS objects_s_100000_above CASCADE;")
+        .execute(&mut connection)
+        .unwrap();
 
     divider(&mut connection, 180000.0);
 
@@ -71,7 +78,9 @@ async fn test_end_to_end_sequence() {
     let mut rng = rand::rng();
     let format = Format::new().set_num_format("yyyy-mm-dd hh:mm:ss");
 
-    let start_date = NaiveDate::from_ymd_opt(2023, 1, 1).unwrap().and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+    let start_date = NaiveDate::from_ymd_opt(2023, 1, 1)
+        .unwrap()
+        .and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
 
     for i in 0..200000 {
         let current_date = start_date + ChronoDuration::seconds(i as i64);
@@ -87,7 +96,9 @@ async fn test_end_to_end_sequence() {
         let s_val: f32 = rng.random_range(10000.0..200000.0);
 
         let row = (i + 1) as u32;
-        worksheet.write_datetime_with_format(row, 0, current_date, &format).unwrap();
+        worksheet
+            .write_datetime_with_format(row, 0, current_date, &format)
+            .unwrap();
         worksheet.write(row, 1, type_val).unwrap();
         worksheet.write(row, 2, p_val).unwrap();
         worksheet.write(row, 3, s_val).unwrap();
@@ -109,8 +120,12 @@ async fn test_end_to_end_sequence() {
 
     {
         let stdin = fill_proc.stdin.as_mut().expect("Failed to open stdin");
-        stdin.write_all(b"/tmp/test_data_native.xlsx\n").expect("Failed to write to stdin");
-        stdin.write_all(b"Sheet1\n").expect("Failed to write to stdin");
+        stdin
+            .write_all(b"/tmp/test_data_native.xlsx\n")
+            .expect("Failed to write to stdin");
+        stdin
+            .write_all(b"Sheet1\n")
+            .expect("Failed to write to stdin");
         stdin.write_all(b"s\n").expect("Failed to write to stdin");
         stdin.write_all(b"\n").expect("Failed to write to stdin");
     }
@@ -123,7 +138,10 @@ async fn test_end_to_end_sequence() {
         .get_result(&mut connection)
         .expect("Error fetching count");
 
-    assert_eq!(count, 200000, "There should be 200,000 rows in the partitioned table");
+    assert_eq!(
+        count, 200000,
+        "There should be 200,000 rows in the partitioned table"
+    );
 
     // 7. Calculate mid-price and cost
     let target_type_t = "TRADE".to_string();
@@ -131,7 +149,8 @@ async fn test_end_to_end_sequence() {
     let target_type_b = "BID".to_string();
 
     println!("Fetching trade objects...");
-    let trade_objects = find_all_with_t(&mut connection, &target_type_t).expect("Error querying database");
+    let trade_objects =
+        find_all_with_t(&mut connection, &target_type_t).expect("Error querying database");
 
     println!("Calculating costs and updating DB...");
     for item in trade_objects {
@@ -139,15 +158,11 @@ async fn test_end_to_end_sequence() {
         let mut bp = 0.0;
         let pt = item.p; // Price of the TRADE object
 
-        if let Some(p_val) =
-            find_nearest(&mut connection, item.id, &target_type_a)
-        {
+        if let Some(p_val) = find_nearest(&mut connection, item.id, &target_type_a) {
             ap = p_val;
         }
 
-        if let Some(p_val) =
-            find_nearest(&mut connection, item.id, &target_type_b)
-        {
+        if let Some(p_val) = find_nearest(&mut connection, item.id, &target_type_b) {
             bp = p_val;
         }
 
@@ -158,7 +173,7 @@ async fn test_end_to_end_sequence() {
             .set(c.eq(ec))
             .execute(&mut connection)
             .expect("Error updating column c for ObjectS");
-        
+
         println!("Udating DB... cost{} for id {}", item.c, item.id);
     }
     tokio::time::sleep(Duration::from_secs(10)).await;
