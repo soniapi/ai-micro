@@ -13,34 +13,16 @@ use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let connection = &mut establish_connection();
 
-    let target_type_a = "ASK".to_string();
-    let target_type_b = "BID".to_string();
     let target_type_t = "TRADE".to_string();
     let mut avg_value_population: f32 = 0.0;
-    let mut ap: f32 = 0.0;
-    let mut bp: f32 = 0.0;
-    let pt: f32 = 0.0;
 
     match find_all_with_t(connection, &target_type_t) {
         Ok(trade_objects) => {
-            for item in trade_objects {
+            for item in &trade_objects {
                 println!("Item id {:?}", item.id);
                 let start_object_id = item.id;
 
-                if let Some(p_val) =
-                    find_nearest(connection, start_object_id, &target_type_a)
-                {
-                    ap = p_val;
-                }
-
-                if let Some(p_val) =
-                    find_nearest(connection, start_object_id, &target_type_b)
-                {
-                    bp = p_val;
-                }
-
-                let mp = calculate_mp(ap, bp);
-                let ec = calculate_c(pt, mp);
+                let ec = calculate_ec_for_one_trade(start_object_id, &trade_objects);
                 println!("c is {:?}", &ec);
 
                 diesel::update(objects_s.filter(id.eq(start_object_id)))
