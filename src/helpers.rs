@@ -4,7 +4,7 @@ use diesel::dsl::{min, max};
 use ai_infra::schema::objects_s::dsl::*;
 use diesel::PgConnection;
 
-pub fn prompt_microstructure_variable(connection: &mut PgConnection) {
+pub fn prompt_microstructure_variable(connection: &mut PgConnection) -> Option<char> {
     println!("Choose a microstructure variable amongst the following choices: 1) Trade size");
     let mut input = String::new();
 
@@ -29,9 +29,10 @@ pub fn prompt_microstructure_variable(connection: &mut PgConnection) {
                 println!("Could not find min/max values for trade size.");
             }
         }
+        return Some('s');
     } else {
         // Anything else will default to exiting the function
-        return;
+        return None;
     }
 }
 

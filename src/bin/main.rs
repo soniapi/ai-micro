@@ -5,11 +5,20 @@ use ai_infra::establish_connection;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let connection = &mut establish_connection();
 
-    let micro_var = 's';
+    let micro_var = if let Some(v) = helpers::prompt_microstructure_variable(connection) {
+        v
+    } else {
+        return Ok(());
+    };
+
     let avg_value_population =
         calculate_whole_population_trades_ec_average(connection, micro_var);
 
-    let divide_s = 195000.0_f32;
+    let divide_s = if let Some(cutoff) = helpers::prompt_cutoff_value() {
+        cutoff
+    } else {
+        return Ok(());
+    };
     let _divide = divide::Divide::Float(divide_s);
 
     // Something else
