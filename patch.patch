@@ -1,0 +1,13 @@
+--- tests/integration_test.rs
++++ tests/integration_test.rs
+@@ -155,7 +155,9 @@
+     let _micro_var = helpers::prompt_microstructure_variable(&mut connection)
+         .unwrap_or('s');
+
++    tokio::time::sleep(Duration::from_secs(5)).await;
++
+     let divide_s = helpers::prompt_cutoff_value().unwrap_or(180000.0);
+
++    tokio::time::sleep(Duration::from_secs(5)).await;
++
+     // Detach the default 100000 partitions to keep the data safe before dropping target partitions
