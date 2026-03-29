@@ -72,6 +72,14 @@ async fn test_end_to_end_sequence() {
 
     let divide_s = helpers::prompt_cutoff_value().unwrap_or(180000.0);
 
+    // Explicitly drop the default 100000 partitions created by the migration
+    sql_query("DROP TABLE IF EXISTS objects_s_100000_below CASCADE;")
+        .execute(&mut connection)
+        .unwrap();
+    sql_query("DROP TABLE IF EXISTS objects_s_100000_above CASCADE;")
+        .execute(&mut connection)
+        .unwrap();
+
     let drop_below = format!("DROP TABLE IF EXISTS objects_s_{}_below CASCADE;", divide_s as i64);
     let drop_above = format!("DROP TABLE IF EXISTS objects_s_{}_above CASCADE;", divide_s as i64);
 
