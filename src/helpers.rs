@@ -1,11 +1,13 @@
-use std::io;
+use std::io::{self, Write};
 use diesel::prelude::*;
 use diesel::dsl::{min, max};
 use ai_infra::schema::objects_s::dsl::*;
 use diesel::PgConnection;
 
 pub fn prompt_microstructure_variable(connection: &mut PgConnection) -> Option<char> {
-    println!("Choose a microstructure variable amongst the following choices: 1) Trade size");
+    print!("Choose a microstructure variable amongst the following choices: 1) Trade size: ");
+    io::stdout().flush().unwrap();
+
     let mut input = String::new();
 
     // Read user input
@@ -37,7 +39,9 @@ pub fn prompt_microstructure_variable(connection: &mut PgConnection) -> Option<c
 }
 
 pub fn prompt_cutoff_value() -> Option<f32> {
-    println!("Enter a cutoff value for the microstructure variable you selected, it should be within the range:");
+    print!("Enter a cutoff value for the microstructure variable you selected, it should be within the range: ");
+    io::stdout().flush().unwrap();
+
     let mut input = String::new();
 
     // Read user input

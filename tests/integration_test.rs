@@ -54,40 +54,6 @@ async fn test_end_to_end_sequence() {
 
     connection.run_pending_migrations(MIGRATIONS).unwrap();
 
-    // Explicitly drop the default 100000 partitions created by the migration
-    sql_query("DROP TABLE IF EXISTS objects_s_100000_below CASCADE;")
-        .execute(&mut connection)
-        .unwrap();
-    sql_query("DROP TABLE IF EXISTS objects_s_100000_above CASCADE;")
-        .execute(&mut connection)
-        .unwrap();
-
-    // Mock stdin for Unix systems
-    #[cfg(unix)]
-    {
-        let temp_file_path = "/tmp/mock_stdin.txt";
-        let mut mock_file = std::fs::File::create(temp_file_path).expect("Failed to create mock file");
-        mock_file.write_all(b"1\n180000.0\n").expect("Failed to write mock input");
-
-        let mock_file_read = std::fs::File::open(temp_file_path).expect("Failed to open mock file");
-        unsafe {
-            libc::dup2(std::os::fd::AsRawFd::as_raw_fd(&mock_file_read), libc::STDIN_FILENO);
-        }
-    }
-
-    let _micro_var = helpers::prompt_microstructure_variable(&mut connection)
-        .unwrap_or('s');
-
-    let divide_s = helpers::prompt_cutoff_value().unwrap_or(180000.0);
-
-    let drop_below = format!("DROP TABLE IF EXISTS objects_s_{}_below CASCADE;", divide_s as i64);
-    let drop_above = format!("DROP TABLE IF EXISTS objects_s_{}_above CASCADE;", divide_s as i64);
-
-    sql_query(drop_below).execute(&mut connection).unwrap();
-    sql_query(drop_above).execute(&mut connection).unwrap();
-
-    divider(&mut connection, divide_s);
-
     // 6. Generate 200,000 rows natively in Rust
     println!("Generating test data using rust_xlsxwriter...");
     let mut workbook = Workbook::new();
@@ -117,7 +83,12 @@ async fn test_end_to_end_sequence() {
         };
 
         let p_val: f32 = rng.random_range(10.0..100.0);
-        let s_val: f32 = rng.random_range(10000.0..200000.0);
+        let mut s_val: f32 = rng.random_range(10000.0..200000.0);
+
+        // Prevent values from falling into the default migration gap
+        if s_val >= 99999.0 && s_val <= 100000.0 {
+            s_val = 100001.0;
+        }
 
         let row = (i + 1) as u32;
         worksheet
@@ -139,6 +110,7 @@ async fn test_end_to_end_sequence() {
         .arg("fill_data")
         .stdin(Stdio::piped())
         .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
         .spawn()
         .expect("Failed to spawn fill_data binary");
 
@@ -166,6 +138,56 @@ async fn test_end_to_end_sequence() {
         count, 200000,
         "There should be 200,000 rows in the partitioned table"
     );
+
+    // Mock stdin for Unix systems
+    #[cfg(unix)]
+    {
+        let temp_file_path = "/tmp/mock_stdin.txt";
+        let mut mock_file = std::fs::File::create(temp_file_path).expect("Failed to create mock file");
+        mock_file.write_all(b"1\n180000.0\n").expect("Failed to write mock input");
+
+        let mock_file_read = std::fs::File::open(temp_file_path).expect("Failed to open mock file");
+        unsafe {
+            libc::dup2(std::os::fd::AsRawFd::as_raw_fd(&mock_file_read), libc::STDIN_FILENO);
+        }
+    }
+
+    let _micro_var = helpers::prompt_microstructure_variable(&mut connection)
+        .unwrap_or('s');
+
+    let divide_s = helpers::prompt_cutoff_value().unwrap_or(180000.0);
+
+    // Detach the default 100000 partitions to keep the data safe before dropping target partitions
+    sql_query("ALTER TABLE objects_s DETACH PARTITION objects_s_100000_below;")
+        .execute(&mut connection)
+        .unwrap();
+    sql_query("ALTER TABLE objects_s DETACH PARTITION objects_s_100000_above;")
+        .execute(&mut connection)
+        .unwrap();
+
+    let drop_below = format!("DROP TABLE IF EXISTS objects_s_below_{} CASCADE;", divide_s as i64);
+    let drop_above = format!("DROP TABLE IF EXISTS objects_s_above_{} CASCADE;", divide_s as i64);
+
+    sql_query(drop_below).execute(&mut connection).unwrap();
+    sql_query(drop_above).execute(&mut connection).unwrap();
+
+    divider(&mut connection, divide_s);
+
+    // Insert the data back into the dynamically created partitions
+    sql_query("INSERT INTO objects_s SELECT * FROM objects_s_100000_below;")
+        .execute(&mut connection)
+        .unwrap();
+    sql_query("INSERT INTO objects_s SELECT * FROM objects_s_100000_above;")
+        .execute(&mut connection)
+        .unwrap();
+
+    // Now it's safe to drop the old detached tables
+    sql_query("DROP TABLE IF EXISTS objects_s_100000_below;")
+        .execute(&mut connection)
+        .unwrap();
+    sql_query("DROP TABLE IF EXISTS objects_s_100000_above;")
+        .execute(&mut connection)
+        .unwrap();
 
     // 7. Calculate mid-price and cost
     let target_type_t = "TRADE".to_string();
