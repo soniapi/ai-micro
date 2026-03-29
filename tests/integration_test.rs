@@ -83,7 +83,12 @@ async fn test_end_to_end_sequence() {
         };
 
         let p_val: f32 = rng.random_range(10.0..100.0);
-        let s_val: f32 = rng.random_range(10000.0..200000.0);
+        let mut s_val: f32 = rng.random_range(10000.0..200000.0);
+
+        // Prevent values from falling into the default migration gap
+        if s_val >= 99999.0 && s_val <= 100000.0 {
+            s_val = 100001.0;
+        }
 
         let row = (i + 1) as u32;
         worksheet
