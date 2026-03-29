@@ -40,6 +40,7 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "dotenvy",
+ "libc",
  "rand 0.10.0",
  "rust_xlsxwriter",
  "testcontainers",

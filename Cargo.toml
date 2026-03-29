@@ -13,6 +13,7 @@ chrono = "0.4.44"
 [dev-dependencies]
 chrono = "0.4.44"
 diesel_migrations = "2.3.1"
+libc = "0.2.183"
 rand = "0.10.0"
 rust_xlsxwriter = { version = "0.94.0", features = ["chrono"] }
 testcontainers = "0.27.2"
