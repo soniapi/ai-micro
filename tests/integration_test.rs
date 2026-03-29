@@ -62,9 +62,9 @@ async fn test_end_to_end_sequence() {
         .execute(&mut connection)
         .unwrap();
 
-    // Mock stdin for Unix systems
+    // Mock stdin for Unix systems, unless running interactively
     #[cfg(unix)]
-    {
+    if std::env::var("INTERACTIVE").is_err() {
         let temp_file_path = "/tmp/mock_stdin.txt";
         let mut mock_file = std::fs::File::create(temp_file_path).expect("Failed to create mock file");
         mock_file.write_all(b"1\n180000.0\n").expect("Failed to write mock input");
@@ -133,10 +133,7 @@ async fn test_end_to_end_sequence() {
 
     println!("Filling partitions with 200,000 rows. This might take a bit...");
 
-    let mut fill_proc = Command::new("cargo")
-        .arg("run")
-        .arg("--bin")
-        .arg("fill_data")
+    let mut fill_proc = Command::new(env!("CARGO_BIN_EXE_fill_data"))
         .stdin(Stdio::piped())
         .stdout(Stdio::inherit())
         .spawn()
