@@ -1,4 +1,3 @@
-
 use ::ai_micro::*;
 use ai_infra::establish_connection;
 
@@ -11,8 +10,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     };
 
-    let avg_value_population =
-        calculate_whole_population_trades_ec_average(connection, micro_var);
+    let avg_value_population = calculate_whole_population_trades_ec_average(connection, micro_var);
 
     let divide_s = if let Some(cutoff) = helpers::prompt_cutoff_value() {
         cutoff
@@ -22,9 +20,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _divide = divide::Divide::Float(divide_s);
 
     // Something else
-    calculate_population_1_trades_ec_average(connection, divide::Divide::Float(divide_s), micro_var);
+    calculate_population_1_trades_ec_average(
+        connection,
+        divide::Divide::Float(divide_s),
+        micro_var,
+    );
 
-    calculate_population_2_trades_ec_average(connection, divide::Divide::Float(divide_s), micro_var);
+    calculate_population_2_trades_ec_average(
+        connection,
+        divide::Divide::Float(divide_s),
+        micro_var,
+    );
 
     let (p1, p2, n1, n2) = calculate_proportions_partioned_table(connection, avg_value_population)?;
 

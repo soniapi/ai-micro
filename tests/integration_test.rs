@@ -1,6 +1,6 @@
+use ai_infra::divider;
 use ai_infra::schema::objects_s::dsl::objects_s;
 use ai_infra::schema::objects_s::*;
-use ai_infra::divider;
 use ai_micro::{calculate_c, calculate_mp, find_all_with_t, find_nearest, helpers};
 use chrono::{Duration as ChronoDuration, NaiveDate, NaiveTime};
 use diesel::ExpressionMethods;
@@ -143,19 +143,28 @@ async fn test_end_to_end_sequence() {
     #[cfg(unix)]
     {
         let temp_file_path = "/tmp/mock_stdin.txt";
-        let mut mock_file = std::fs::File::create(temp_file_path).expect("Failed to create mock file");
-        mock_file.write_all(b"1\n180000.0\n").expect("Failed to write mock input");
+        let mut mock_file =
+            std::fs::File::create(temp_file_path).expect("Failed to create mock file");
+        mock_file
+            .write_all(b"1\n180000.0\n")
+            .expect("Failed to write mock input");
 
         let mock_file_read = std::fs::File::open(temp_file_path).expect("Failed to open mock file");
         unsafe {
-            libc::dup2(std::os::fd::AsRawFd::as_raw_fd(&mock_file_read), libc::STDIN_FILENO);
+            libc::dup2(
+                std::os::fd::AsRawFd::as_raw_fd(&mock_file_read),
+                libc::STDIN_FILENO,
+            );
         }
     }
 
-    let _micro_var = helpers::prompt_microstructure_variable(&mut connection)
-        .unwrap_or('s');
+    let _micro_var = helpers::prompt_microstructure_variable(&mut connection).unwrap_or('s');
+
+    tokio::time::sleep(Duration::from_secs(5)).await;
 
     let divide_s = helpers::prompt_cutoff_value().unwrap_or(180000.0);
+
+    tokio::time::sleep(Duration::from_secs(5)).await;
 
     // Detach the default 100000 partitions to keep the data safe before dropping target partitions
     sql_query("ALTER TABLE objects_s DETACH PARTITION objects_s_100000_below;")
@@ -165,8 +174,14 @@ async fn test_end_to_end_sequence() {
         .execute(&mut connection)
         .unwrap();
 
-    let drop_below = format!("DROP TABLE IF EXISTS objects_s_below_{} CASCADE;", divide_s as i64);
-    let drop_above = format!("DROP TABLE IF EXISTS objects_s_above_{} CASCADE;", divide_s as i64);
+    let drop_below = format!(
+        "DROP TABLE IF EXISTS objects_s_below_{} CASCADE;",
+        divide_s as i64
+    );
+    let drop_above = format!(
+        "DROP TABLE IF EXISTS objects_s_above_{} CASCADE;",
+        divide_s as i64
+    );
 
     sql_query(drop_below).execute(&mut connection).unwrap();
     sql_query(drop_above).execute(&mut connection).unwrap();
