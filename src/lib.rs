@@ -1,10 +1,15 @@
+pub mod divide;
+
 use ai_infra::models::ObjectS;
 use ai_infra::schema::objects_s::dsl::objects_s;
-use ai_infra::schema::objects_s::*;
+use ai_infra::schema::{objects::dsl as obj_dsl, objects_s::dsl as obj_s_dsl};
+use ai_infra::schema::objects_s::dsl::*;
 use diesel::ExpressionMethods;
-use diesel::dsl::avg;
+use diesel::dsl::{avg, max};
 use diesel::prelude::*;
 use diesel::{PgConnection, QueryDsl, RunQueryDsl};
+use divide::Divide;
+use chrono::NaiveDateTime;
 
 pub fn backwards(
     connection: &mut PgConnection,
@@ -141,37 +146,171 @@ pub fn update_partioned_table_with_ec_for_one_trade(
 
 pub fn calculate_population_2_trades_ec_average(
     connection: &mut PgConnection,
-    divide_s: f32,
-    max_value: f32,
+    divide: Divide,
+    micro_var: char,
 ) {
-    let result_2: Result<Option<f64>, diesel::result::Error> = objects_s
-        .filter(s.ge(divide_s).and(s.le(max_value)))
-        .select(avg(c))
-        .first(connection);
+    if micro_var == 's' {
+        let result_2: Result<Option<f64>, diesel::result::Error> = match divide {
+            Divide::Float(val) => {
+                let max_value: Result<Option<f32>, _> = obj_s_dsl::objects_s.select(max(obj_s_dsl::s)).first(connection);
+                match max_value {
+                    Ok(Some(max_val)) => {
+                        obj_s_dsl::objects_s
+                            .filter(obj_s_dsl::s.ge(val).and(obj_s_dsl::s.le(max_val)))
+                            .select(avg(obj_s_dsl::c))
+                            .first(connection)
+                    },
+                    _ => Ok(None)
+                }
+            }
+            Divide::Timestamp(ts) => {
+                let max_value: Result<Option<NaiveDateTime>, _> = obj_s_dsl::objects_s.select(max(obj_s_dsl::d)).first(connection);
+                match max_value {
+                    Ok(Some(max_val)) => {
+                        obj_s_dsl::objects_s
+                            .filter(obj_s_dsl::d.ge(ts).and(obj_s_dsl::d.le(max_val)))
+                            .select(avg(obj_s_dsl::c))
+                            .first(connection)
+                    },
+                    _ => Ok(None)
+                }
+            }
+            Divide::None => {
+                let divide_s = 195000.0_f32;
+                let max_value: Result<Option<f32>, _> = obj_s_dsl::objects_s.select(max(obj_s_dsl::s)).first(connection);
+                match max_value {
+                    Ok(Some(max_val)) => {
+                        obj_s_dsl::objects_s
+                            .filter(obj_s_dsl::s.ge(divide_s).and(obj_s_dsl::s.le(max_val)))
+                            .select(avg(obj_s_dsl::c))
+                            .first(connection)
+                    },
+                    _ => Ok(None)
+                }
+            }
+        };
 
-    match result_2 {
-        Ok(Some(average_value_2)) => {
-            println!("Population_2 c average: {:?}", average_value_2)
+        match result_2 {
+            Ok(Some(average_value_2)) => println!("Population_2 c average: {:?}", average_value_2),
+            Ok(None) => println!("No data found to calculate the c average."),
+            Err(e) => eprintln!("Error calculating c average: {:?}", e),
         }
-        Ok(None) => println!("No data found to calculate the c average."),
-        Err(e) => eprintln!("Error calculating c average: {:?}", e),
+    } else {
+        let result_2: Result<Option<f64>, diesel::result::Error> = match divide {
+            Divide::Float(val) => {
+                let max_value: Result<Option<f32>, _> = obj_dsl::objects.select(max(obj_dsl::s)).first(connection);
+                match max_value {
+                    Ok(Some(max_val)) => {
+                        obj_dsl::objects
+                            .filter(obj_dsl::s.ge(val).and(obj_dsl::s.le(max_val)))
+                            .select(avg(obj_dsl::c))
+                            .first(connection)
+                    },
+                    _ => Ok(None)
+                }
+            }
+            Divide::Timestamp(ts) => {
+                let max_value: Result<Option<NaiveDateTime>, _> = obj_dsl::objects.select(max(obj_dsl::d)).first(connection);
+                match max_value {
+                    Ok(Some(max_val)) => {
+                        obj_dsl::objects
+                            .filter(obj_dsl::d.ge(ts).and(obj_dsl::d.le(max_val)))
+                            .select(avg(obj_dsl::c))
+                            .first(connection)
+                    },
+                    _ => Ok(None)
+                }
+            }
+            Divide::None => {
+                let divide_s = 195000.0_f32;
+                let max_value: Result<Option<f32>, _> = obj_dsl::objects.select(max(obj_dsl::s)).first(connection);
+                match max_value {
+                    Ok(Some(max_val)) => {
+                        obj_dsl::objects
+                            .filter(obj_dsl::s.ge(divide_s).and(obj_dsl::s.le(max_val)))
+                            .select(avg(obj_dsl::c))
+                            .first(connection)
+                    },
+                    _ => Ok(None)
+                }
+            }
+        };
+
+        match result_2 {
+            Ok(Some(average_value_2)) => println!("Population_2 c average: {:?}", average_value_2),
+            Ok(None) => println!("No data found to calculate the c average."),
+            Err(e) => eprintln!("Error calculating c average: {:?}", e),
+        }
     }
 }
 
 pub fn calculate_population_1_trades_ec_average(
     connection: &mut PgConnection,
-    start_s: f32,
-    divide_s: f32,
+    divide: Divide,
+    micro_var: char,
 ) {
-    let result_1: Result<Option<f64>, diesel::result::Error> = objects_s
-        .filter(s.ge(start_s).and(s.lt(divide_s)))
-        .select(avg(c))
-        .first(connection);
+    if micro_var == 's' {
+        let result_1: Result<Option<f64>, diesel::result::Error> = match divide {
+            Divide::Float(val) => {
+                let start_s = 0.0_f32;
+                obj_s_dsl::objects_s
+                    .filter(obj_s_dsl::s.ge(start_s).and(obj_s_dsl::s.lt(val)))
+                    .select(avg(obj_s_dsl::c))
+                    .first(connection)
+            }
+            Divide::Timestamp(ts) => {
+                let start_d = NaiveDateTime::MIN;
+                obj_s_dsl::objects_s
+                    .filter(obj_s_dsl::d.ge(start_d).and(obj_s_dsl::d.lt(ts)))
+                    .select(avg(obj_s_dsl::c))
+                    .first(connection)
+            }
+            Divide::None => {
+                let start_s = 0.0_f32;
+                let divide_s = 195000.0_f32;
+                obj_s_dsl::objects_s
+                    .filter(obj_s_dsl::s.ge(start_s).and(obj_s_dsl::s.lt(divide_s)))
+                    .select(avg(obj_s_dsl::c))
+                    .first(connection)
+            }
+        };
 
-    match result_1 {
-        Ok(Some(average_value_1)) => println!("Population_1 c average: {:?}", average_value_1),
-        Ok(None) => println!("No data found to calculate the c average."),
-        Err(e) => eprintln!("Error calculating c average: {:?}", e),
+        match result_1 {
+            Ok(Some(average_value_1)) => println!("Population_1 c average: {:?}", average_value_1),
+            Ok(None) => println!("No data found to calculate the c average."),
+            Err(e) => eprintln!("Error calculating c average: {:?}", e),
+        }
+    } else {
+        let result_1: Result<Option<f64>, diesel::result::Error> = match divide {
+            Divide::Float(val) => {
+                let start_s = 0.0_f32;
+                obj_dsl::objects
+                    .filter(obj_dsl::s.ge(start_s).and(obj_dsl::s.lt(val)))
+                    .select(avg(obj_dsl::c))
+                    .first(connection)
+            }
+            Divide::Timestamp(ts) => {
+                let start_d = NaiveDateTime::MIN;
+                obj_dsl::objects
+                    .filter(obj_dsl::d.ge(start_d).and(obj_dsl::d.lt(ts)))
+                    .select(avg(obj_dsl::c))
+                    .first(connection)
+            }
+            Divide::None => {
+                let start_s = 0.0_f32;
+                let divide_s = 195000.0_f32;
+                obj_dsl::objects
+                    .filter(obj_dsl::s.ge(start_s).and(obj_dsl::s.lt(divide_s)))
+                    .select(avg(obj_dsl::c))
+                    .first(connection)
+            }
+        };
+
+        match result_1 {
+            Ok(Some(average_value_1)) => println!("Population_1 c average: {:?}", average_value_1),
+            Ok(None) => println!("No data found to calculate the c average."),
+            Err(e) => eprintln!("Error calculating c average: {:?}", e),
+        }
     }
 }
 

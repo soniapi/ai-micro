@@ -1,11 +1,6 @@
-use core::f32;
 
 use ::ai_micro::*;
 use ai_infra::establish_connection;
-use ai_infra::schema::objects_s::dsl::objects_s;
-use ai_infra::schema::objects_s::*;
-use diesel::dsl::max;
-use diesel::{QueryDsl, RunQueryDsl};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let connection = &mut establish_connection();
@@ -14,24 +9,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let avg_value_population =
         calculate_whole_population_trades_ec_average(connection, micro_var);
 
-    let start_s = 0.0_f32;
     let divide_s = 195000.0_f32;
+    let _divide = divide::Divide::Float(divide_s);
 
     // Something else
-    calculate_population_1_trades_ec_average(connection, start_s, divide_s);
+    calculate_population_1_trades_ec_average(connection, divide::Divide::Float(divide_s), micro_var);
 
-    let result_max: Result<Option<f32>, diesel::result::Error> =
-        objects_s.select(max(s)).first(connection);
-
-    match result_max {
-        Ok(Some(max_value)) => {
-            println!("Whole population max s: {:?}", max_value);
-
-            calculate_population_2_trades_ec_average(connection, divide_s, max_value);
-        }
-        Ok(None) => println!("No data found to calculate the max."),
-        Err(e) => eprintln!("Error calculating max: {:?}", e),
-    }
+    calculate_population_2_trades_ec_average(connection, divide::Divide::Float(divide_s), micro_var);
 
     let (p1, p2, n1, n2) = calculate_proportions_partioned_table(connection, avg_value_population)?;
 
