@@ -1,3 +1,4 @@
+pub mod helpers;
 use ai_infra::models::ObjectS;
 use ai_infra::schema::objects_s::dsl::objects_s;
 use ai_infra::schema::objects_s::*;
