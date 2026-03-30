@@ -141,7 +141,7 @@ async fn test_end_to_end_sequence() {
 
     // Mock stdin for Unix systems
     #[cfg(unix)]
-    {
+    if std::env::var("INTERACTIVE").is_err() {
         let temp_file_path = "/tmp/mock_stdin.txt";
         let mut mock_file =
             std::fs::File::create(temp_file_path).expect("Failed to create mock file");
