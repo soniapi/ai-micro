@@ -11,9 +11,20 @@ pub fn prompt_microstructure_variable(connection: &mut PgConnection) -> Option<c
     let mut input = String::new();
 
     // Read user input
-    io::stdin()
-        .read_line(&mut input)
-        .expect("Failed to read input");
+    loop {
+        input.clear();
+        let bytes = io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read input");
+
+        if bytes == 0 {
+            return None; // EOF
+        }
+
+        if !input.trim().is_empty() {
+            break;
+        }
+    }
 
     // Check if input is "1)" or "1"
     let trimmed = input.trim();
@@ -52,9 +63,20 @@ pub fn prompt_cutoff_value() -> Option<f32> {
     let mut input = String::new();
 
     // Read user input
-    io::stdin()
-        .read_line(&mut input)
-        .expect("Failed to read input");
+    loop {
+        input.clear();
+        let bytes = io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read input");
+
+        if bytes == 0 {
+            return None; // EOF
+        }
+
+        if !input.trim().is_empty() {
+            break;
+        }
+    }
 
     // The user can only enter a number for now, anything else will exit the function.
     if let Ok(divide) = input.trim().parse::<f32>() {
