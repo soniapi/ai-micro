@@ -16,19 +16,17 @@ pub fn backwards(
     connection: &mut PgConnection,
     start_object_id: i32,
     target_type: &String,
-) -> Result<Vec<ObjectS>, diesel::result::Error> {
-    let result_vector = objects_s
+) -> Result<Option<ObjectS>, diesel::result::Error> {
+    let result_option = objects_s
         .filter(id.le(start_object_id))
         .order(id.desc())
         .limit(100)
         .select(ObjectS::as_select())
         .load::<ObjectS>(connection)?
         .into_iter()
-        .find(|backward_item| backward_item.t == *target_type)
-        .into_iter()
-        .collect();
+        .find(|backward_item| backward_item.t == *target_type);
 
-    Ok(result_vector)
+    Ok(result_option)
 }
 
 pub fn calculate_mp(ap: f32, bp: f32) -> f32 {
@@ -319,19 +317,14 @@ pub fn find_nearest(
 ) -> Option<f32> {
     let mut p_val = None;
     match backwards(connection, start_object_id, target_type) {
-        Ok(items) => {
-            if let Some(item) = items
-                .into_iter()
-                .filter(|i| i.t == *target_type)
-                .max_by_key(|i| i.d)
-            {
-                println!(
-                    "Found object: id={:?}, type={:?}, date={:?}",
-                    item.id, item.t, item.d
-                );
-                p_val = Some(item.p);
-            }
+        Ok(Some(item)) => {
+            println!(
+                "Found object: id={:?}, type={:?}, date={:?}",
+                item.id, item.t, item.d
+            );
+            p_val = Some(item.p);
         }
+        Ok(None) => {}
         Err(e) => {
             eprintln!("Error fetching objects: {}", e);
         }
