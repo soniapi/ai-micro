@@ -6,16 +6,17 @@ use std::io::{self, Write};
 
 pub fn prompt_microstructure_variable(connection: &mut PgConnection) -> Option<char> {
     print!("Choose a microstructure variable amongst the following choices: 1) Trade size: ");
-    io::stdout().flush().unwrap();
+    let _ = io::stdout().flush();
 
     let mut input = String::new();
 
     // Read user input
     loop {
         input.clear();
-        let bytes = io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read input");
+        let bytes = match io::stdin().read_line(&mut input) {
+            Ok(b) => b,
+            Err(_) => return None,
+        };
 
         if bytes == 0 {
             return None; // EOF
@@ -47,10 +48,10 @@ pub fn prompt_microstructure_variable(connection: &mut PgConnection) -> Option<c
                 println!("Could not find min/max values for trade size.");
             }
         }
-        return Some('s');
+        Some('s')
     } else {
         // Anything else will default to exiting the function
-        return None;
+        None
     }
 }
 
@@ -58,16 +59,17 @@ pub fn prompt_cutoff_value() -> Option<f32> {
     print!(
         "Enter a cutoff value for the microstructure variable you selected, it should be within the range: "
     );
-    io::stdout().flush().unwrap();
+    let _ = io::stdout().flush();
 
     let mut input = String::new();
 
     // Read user input
     loop {
         input.clear();
-        let bytes = io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read input");
+        let bytes = match io::stdin().read_line(&mut input) {
+            Ok(b) => b,
+            Err(_) => return None,
+        };
 
         if bytes == 0 {
             return None; // EOF
