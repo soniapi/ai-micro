@@ -35,6 +35,8 @@ jobs:
       run: git clone https://github.com/soniapi/ai-infra ../ai-infra
     - name: Checkout ai-prop
       run: git clone https://github.com/soniapi/ai-prop ../ai-prop
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y protobuf-compiler libpq-dev
     - name: Setup Database
       env:
         DATABASE_URL: postgres://runner:password@localhost:5432/ai_test
